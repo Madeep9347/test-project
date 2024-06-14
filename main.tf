@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "ap-south-1"  # Change to your preferred region
+  region = "ap-south-1"
 }
 
 # Create VPC
@@ -8,10 +8,18 @@ resource "aws_vpc" "main" {
 }
 
 # Create Public Subnet (for Bastion Host)
-resource "aws_subnet" "public" {
+resource "aws_subnet" "public_1" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
-  availability_zone       = "ap-south-1a"  # Change to an available zone in your region
+  availability_zone       = "ap-south-1a"
+  map_public_ip_on_launch = true
+}
+
+# Create another Public Subnet
+resource "aws_subnet" "public_2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.3.0/24"
+  availability_zone       = "ap-south-1b"
   map_public_ip_on_launch = true
 }
 
@@ -19,7 +27,7 @@ resource "aws_subnet" "public" {
 resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.2.0/24"
-  availability_zone = "ap-south-1a"  # Change to an available zone in your region
+  availability_zone = "ap-south-1a"
 }
 
 # Create Internet Gateway
@@ -37,9 +45,39 @@ resource "aws_route_table" "public" {
   }
 }
 
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
+resource "aws_route_table_association" "public_1" {
+  subnet_id      = aws_subnet.public_1.id
   route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "public_2" {
+  subnet_id      = aws_subnet.public_2.id
+  route_table_id = aws_route_table.public.id
+}
+
+# Create NAT Gateway
+resource "aws_eip" "nat" {
+  vpc = true
+}
+
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public_1.id
+}
+
+# Create Route Table for Private Subnet
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat.id
+  }
+}
+
+resource "aws_route_table_association" "private" {
+  subnet_id      = aws_subnet.private.id
+  route_table_id = aws_route_table.private.id
 }
 
 # Create Security Group for Private Instances
@@ -61,10 +99,10 @@ resource "aws_security_group" "private_sg" {
   }
 
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    security_groups = [aws_security_group.bastion_sg.id]
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    security_groups  = [aws_security_group.bastion_sg.id]
   }
 
   egress {
@@ -96,40 +134,35 @@ resource "aws_security_group" "bastion_sg" {
 
 # Launch EC2 Instance for Web Application
 resource "aws_instance" "web" {
-  ami           = "ami-0f58b397bc5c1f2e8"  # Amazon Linux 2 AMI
+  ami           = "ami-0f58b397bc5c1f2e8"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private.id
-  security_groups = [aws_security_group.private_sg.id]  # Use security group ID instead of name
+  security_groups = [aws_security_group.private_sg.id]
 
-  key_name = "testmadeep"  # Replace with your key pair name in the region
+  key_name = "testmadeep"
 }
 
 # Launch EC2 Instance for PostgreSQL Database
 resource "aws_instance" "db" {
-  ami           = "ami-0f58b397bc5c1f2e8"  # Amazon Linux 2 AMI
+  ami           = "ami-0f58b397bc5c1f2e8"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private.id
-  security_groups = [aws_security_group.private_sg.id]  # Use security group ID instead of name
+  security_groups = [aws_security_group.private_sg.id]
 
-  key_name = "testmadeep"  # Replace with your key pair name in the region
+  key_name = "testmadeep"
 
   user_data = <<-EOF
               #!/bin/bash
-              yum update -y
-              amazon-linux-extras install postgresql10 -y
-              systemctl enable postgresql
-              systemctl start postgresql
-              sudo -i -u postgres psql -c "CREATE USER webapp WITH PASSWORD 'password';"
-              sudo -i -u postgres psql -c "CREATE DATABASE webapp_db OWNER webapp;"
+              sudo apt-get install postgresql
               EOF
 }
 
 # Launch EC2 Instance for Bastion Host
 resource "aws_instance" "bastion" {
-  ami           = "ami-0f58b397bc5c1f2e8"  # Amazon Linux 2 AMI
+  ami           = "ami-0f58b397bc5c1f2e8"
   instance_type = "t2.micro"
-  subnet_id     = aws_subnet.public.id
-  security_groups = [aws_security_group.bastion_sg.id]  # Use security group ID instead of name
+  subnet_id     = aws_subnet.public_1.id
+  security_groups = [aws_security_group.bastion_sg.id]
 
-  key_name = "testmadeep"  # Replace with your key pair name in the region
+  key_name = "testmadeep"
 }
