@@ -1,7 +1,13 @@
 provider "aws" {
   region = "ap-south-1"
 }
-
+terraform {
+  backend "s3" {
+    bucket = "test-madeep"
+    key    = "terraform.tfstate"  # Name of the state file in the bucket
+    region = "ap-south-1"          # Replace with your preferred AWS region
+  }
+}
 # Create VPC
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
