@@ -99,11 +99,9 @@ resource "aws_instance" "web" {
   ami           = "ami-0f58b397bc5c1f2e8"  # Amazon Linux 2 AMI
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private.id
-  security_groups = [aws_security_group.private_sg.name]
+  security_groups = [aws_security_group.private_sg.id]  # Use security group ID instead of name
 
   key_name = "testmadeep"  # Replace with your key pair name in the region
-
-  
 }
 
 # Launch EC2 Instance for PostgreSQL Database
@@ -111,7 +109,7 @@ resource "aws_instance" "db" {
   ami           = "ami-0f58b397bc5c1f2e8"  # Amazon Linux 2 AMI
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private.id
-  security_groups = [aws_security_group.private_sg.name]
+  security_groups = [aws_security_group.private_sg.id]  # Use security group ID instead of name
 
   key_name = "testmadeep"  # Replace with your key pair name in the region
 
@@ -131,8 +129,7 @@ resource "aws_instance" "bastion" {
   ami           = "ami-0f58b397bc5c1f2e8"  # Amazon Linux 2 AMI
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public.id
-  security_groups = [aws_security_group.bastion_sg.name]
+  security_groups = [aws_security_group.bastion_sg.id]  # Use security group ID instead of name
 
   key_name = "testmadeep"  # Replace with your key pair name in the region
 }
-
