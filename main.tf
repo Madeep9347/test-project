@@ -1,14 +1,8 @@
 provider "aws" {
-  region = "ap-south-1"
+  region = "us-east-1"
 }
 
-terraform {
-  backend "s3" {
-    bucket = "test-madeep"
-    key    = "terraform.tfstate"
-    region = "ap-south-1"
-  }
-}
+
 
 # Create VPC
 resource "aws_vpc" "main" {
@@ -19,7 +13,7 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "public_1" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
-  availability_zone       = "ap-south-1a"
+  availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
 }
 
@@ -27,7 +21,7 @@ resource "aws_subnet" "public_1" {
 resource "aws_subnet" "public_2" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.3.0/24"
-  availability_zone       = "ap-south-1b"
+  availability_zone       = "us-east-1b"
   map_public_ip_on_launch = true
 }
 
@@ -35,7 +29,7 @@ resource "aws_subnet" "public_2" {
 resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.2.0/24"
-  availability_zone = "ap-south-1a"
+  availability_zone = "us-east-1a"
 }
 
 # Create Internet Gateway
@@ -148,7 +142,7 @@ resource "aws_security_group" "bastion_sg" {
 
 # Launch EC2 Instance for Web Application
 resource "aws_instance" "web" {
-  ami           = "ami-0f58b397bc5c1f2e8"
+  ami           = "ami-04a81a99f5ec58529"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private.id
   security_groups = [aws_security_group.private_sg.id]
@@ -158,7 +152,7 @@ resource "aws_instance" "web" {
 
 # Launch EC2 Instance for PostgreSQL Database
 resource "aws_instance" "db" {
-  ami           = "ami-0f58b397bc5c1f2e8"
+  ami           = "ami-04a81a99f5ec58529"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private.id
   security_groups = [aws_security_group.private_sg.id]
@@ -173,7 +167,7 @@ resource "aws_instance" "db" {
 
 # Launch EC2 Instance for Bastion Host
 resource "aws_instance" "bastion" {
-  ami           = "ami-0f58b397bc5c1f2e8"
+  ami           = "ami-04a81a99f5ec58529"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public_1.id
   security_groups = [aws_security_group.bastion_sg.id]
