@@ -147,7 +147,7 @@ resource "aws_instance" "web" {
   subnet_id     = aws_subnet.private.id
   security_groups = [aws_security_group.private_sg.id]
 
-  key_name = "testmadeep"
+  key_name = "madeep"
 }
 
 # Launch EC2 Instance for PostgreSQL Database
@@ -157,7 +157,7 @@ resource "aws_instance" "db" {
   subnet_id     = aws_subnet.private.id
   security_groups = [aws_security_group.private_sg.id]
 
-  key_name = "testmadeep"
+  key_name = "madeep"
 
   user_data = <<-EOF
               #!/bin/bash
@@ -172,5 +172,5 @@ resource "aws_instance" "bastion" {
   subnet_id     = aws_subnet.public_1.id
   security_groups = [aws_security_group.bastion_sg.id]
 
-  key_name = "testmadeep"
+  key_name = "madeep"
 }
