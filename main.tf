@@ -2,8 +2,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-
-
 # Create VPC
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
@@ -99,6 +97,7 @@ resource "aws_security_group" "private_sg" {
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"]
   }
+
   ingress {
     from_port   = 5000
     to_port     = 5000
@@ -170,6 +169,16 @@ resource "aws_instance" "bastion" {
   ami           = "ami-04a81a99f5ec58529"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public_1.id
+  security_groups = [aws_security_group.bastion_sg.id]
+
+  key_name = "madeep"
+}
+
+# Launch EC2 Instance for Jenkins Server
+resource "aws_instance" "jenkins" {
+  ami           = "ami-04a81a99f5ec58529"
+  instance_type = "t2.large"
+  subnet_id     = aws_subnet.public_2.id
   security_groups = [aws_security_group.bastion_sg.id]
 
   key_name = "madeep"
