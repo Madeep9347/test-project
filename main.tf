@@ -2,8 +2,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-
-
 # Create VPC
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
@@ -99,6 +97,7 @@ resource "aws_security_group" "private_sg" {
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"]
   }
+
   ingress {
     from_port   = 5000
     to_port     = 5000
@@ -111,12 +110,6 @@ resource "aws_security_group" "private_sg" {
     to_port          = 22
     protocol         = "tcp"
     security_groups  = [aws_security_group.bastion_sg.id]
-  }
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]
   }
 
   egress {
@@ -137,6 +130,25 @@ resource "aws_security_group" "bastion_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]  # Restrict to your IP for better security
   }
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   egress {
     from_port   = 0
@@ -156,7 +168,7 @@ resource "aws_instance" "web" {
   key_name = "madeep"
 }
 
-# Launch EC2 Instance for PostgreSQL Database
+# Launch EC2 Instance for MySQL Database
 resource "aws_instance" "db" {
   ami           = "ami-04a81a99f5ec58529"
   instance_type = "t2.micro"
@@ -170,6 +182,16 @@ resource "aws_instance" "db" {
 resource "aws_instance" "bastion" {
   ami           = "ami-04a81a99f5ec58529"
   instance_type = "t2.micro"
+  subnet_id     = aws_subnet.public_1.id
+  security_groups = [aws_security_group.bastion_sg.id]
+
+  key_name = "madeep"
+}
+
+# Launch EC2 Instance for Jenkins Server
+resource "aws_instance" "jenkins" {
+  ami           = "ami-04a81a99f5ec58529"
+  instance_type = "t2.large"
   subnet_id     = aws_subnet.public_1.id
   security_groups = [aws_security_group.bastion_sg.id]
 
